@@ -1,0 +1,518 @@
+--[[
+
+░█████╗░██████╗░██╗░██████╗████████╗██╗███╗░░░███╗░█████╗░░██████╗░██╗
+██╔══██╗██╔══██╗██║██╔════╝╚══██╔══╝██║████╗░████║██╔══██╗██╔════╝░██║
+██║░░╚═╝██████╔╝██║╚█████╗░░░░██║░░░██║██╔████╔██║███████║██║░░██╗░██║
+██║░░██╗██╔══██╗██║░╚═══██╗░░░██║░░░██║██║╚██╔╝██║██╔══██║██║░░╚██╗██║
+╚█████╔╝██║░░██║██║██████╔╝░░░██║░░░██║██║░╚═╝░██║██║░░██║╚██████╔╝██║
+░╚════╝░╚═╝░░╚═╝╚═╝╚═════╝░░░░╚═╝░░░╚═╝╚═╝░░░░░╚═╝╚═╝░░╚═╝░╚═════╝░╚═╝  
+		                                     
+]]
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Magic Hub Main", "GrapeTheme")
+
+local Misc = Window:NewTab("Info")
+local Section = Misc:NewSection("Made By Cristimagi")
+
+local Misc = Window:NewTab("Scripts")
+local Section = Misc:NewSection("Made By Cristimagi")
+
+Section:NewButton("InfiniteYeld", "Run InfiniteYeld", function()
+    loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+end)
+Section:NewButton("Esp", "Right AltGr Enable/Disable", function()
+    -- Player ESP Script with Team Colors and Health Bars
+-- Place this script in a LocalScript inside StarterPlayerScripts
+ 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+ 
+-- ESP Configuration
+local ESP = {
+    Enabled = true,
+    ShowTeamColor = true,
+    ShowHealthBar = true,
+    TextSize = 14,
+    BoxThickness = 2,
+    BoxTransparency = 0.5,
+    TextTransparency = 0,
+    HealthBarThickness = 2,
+    HealthBarWidth = 50,
+    HealthBarHeight = 5,
+    MaxDistance = 5000, -- Increased max distance to 5000 studs
+}
+ 
+-- Storage for ESP drawings
+local ESPObjects = {}
+ 
+-- Function to create ESP objects for a player
+local function CreateESPForPlayer(player)
+    if player == LocalPlayer then return end
+    
+    local espObject = {}
+    
+    -- Box outline for player
+    espObject.Box = Drawing.new("Square")
+    espObject.Box.Visible = false
+    espObject.Box.Thickness = ESP.BoxThickness
+    espObject.Box.Transparency = ESP.BoxTransparency
+    espObject.Box.Filled = false
+    
+    -- Player name and health text
+    espObject.Text = Drawing.new("Text")
+    espObject.Text.Visible = false
+    espObject.Text.Size = ESP.TextSize
+    espObject.Text.Center = true
+    espObject.Text.Outline = true
+    espObject.Text.Transparency = ESP.TextTransparency
+    
+    -- Health bar background (gray)
+    espObject.HealthBG = Drawing.new("Square")
+    espObject.HealthBG.Visible = false
+    espObject.HealthBG.Thickness = ESP.HealthBarThickness
+    espObject.HealthBG.Filled = true
+    espObject.HealthBG.Color = Color3.fromRGB(100, 100, 100)
+    espObject.HealthBG.Transparency = 0.7
+    
+    -- Health bar fill (green to red depending on health)
+    espObject.HealthBar = Drawing.new("Square")
+    espObject.HealthBar.Visible = false
+    espObject.HealthBar.Thickness = ESP.HealthBarThickness
+    espObject.HealthBar.Filled = true
+    espObject.HealthBar.Transparency = 0.7
+    
+    ESPObjects[player] = espObject
+    
+    -- Clear ESP when player leaves
+    player.AncestryChanged:Connect(function()
+        if not player:IsDescendantOf(game) then
+            if ESPObjects[player] then
+                for _, object in pairs(ESPObjects[player]) do
+                    object:Remove()
+                end
+                ESPObjects[player] = nil
+            end
+        end
+    end)
+end
+ 
+-- Create ESP for all existing players
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        CreateESPForPlayer(player)
+    end
+end
+ 
+-- Create ESP for new players who join
+Players.PlayerAdded:Connect(CreateESPForPlayer)
+ 
+-- Clear ESP for players who leave
+Players.PlayerRemoving:Connect(function(player)
+    if ESPObjects[player] then
+        for _, object in pairs(ESPObjects[player]) do
+            object:Remove()
+        end
+        ESPObjects[player] = nil
+    end
+end)
+ 
+-- Function to get player team color
+local function GetPlayerTeamColor(player)
+    if player.Team then
+        return player.TeamColor.Color
+    end
+    return Color3.fromRGB(255, 255, 255) -- White for no team
+end
+ 
+-- Function to get health color based on percentage
+local function GetHealthColor(health, maxHealth)
+    local healthPercent = health / maxHealth
+    
+    -- Gradient from red to green based on health percentage
+    local r = math.clamp(2 * (1 - healthPercent), 0, 1)
+    local g = math.clamp(2 * healthPercent, 0, 1)
+    
+    return Color3.new(r, g, 0)
+end
+ 
+-- Update ESP on each frame
+RunService.RenderStepped:Connect(function()
+    if not ESP.Enabled then
+        -- Hide all ESP elements if disabled
+        for _, espObject in pairs(ESPObjects) do
+            for _, drawing in pairs(espObject) do
+                drawing.Visible = false
+            end
+        end
+        return
+    end
+    
+    for player, espObject in pairs(ESPObjects) do
+        -- Get character and make sure it's valid
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") or not character:FindFirstChild("Humanoid") then
+            for _, drawing in pairs(espObject) do
+                drawing.Visible = false
+            end
+            continue
+        end
+        
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChild("Humanoid")
+        
+        -- Get health information
+        local health = humanoid.Health
+        local maxHealth = humanoid.MaxHealth
+        
+        -- Check if character is on screen and within max distance
+        local vector, onScreen = Camera:WorldToViewportPoint(humanoidRootPart.Position)
+        local distance = (humanoidRootPart.Position - Camera.CFrame.Position).Magnitude
+        
+        -- Only show ESP if player is on screen and within max distance
+        if onScreen and distance <= ESP.MaxDistance then
+            -- Get player size for box ESP (using character bounds)
+            local topPosition = humanoidRootPart.Position + Vector3.new(0, 3, 0)
+            local bottomPosition = humanoidRootPart.Position - Vector3.new(0, 3, 0)
+            
+            local topVector = Camera:WorldToViewportPoint(topPosition)
+            local bottomVector = Camera:WorldToViewportPoint(bottomPosition)
+            
+            local height = math.abs(topVector.Y - bottomVector.Y)
+            local width = height * 0.6
+            
+            local boxPosition = Vector2.new(vector.X - width / 2, vector.Y - height / 2)
+            local boxSize = Vector2.new(width, height)
+            
+            -- Update box
+            espObject.Box.Position = boxPosition
+            espObject.Box.Size = boxSize
+            espObject.Box.Color = GetPlayerTeamColor(player)
+            espObject.Box.Visible = true
+            
+            -- Update player name and health text
+            espObject.Text.Position = Vector2.new(vector.X, boxPosition.Y - 20)
+            espObject.Text.Text = string.format("%s [%.0f%%]", player.Name, (health / maxHealth) * 100)
+            espObject.Text.Color = GetPlayerTeamColor(player)
+            espObject.Text.Visible = true
+            
+            -- Update health bar background
+            espObject.HealthBG.Position = Vector2.new(vector.X - ESP.HealthBarWidth / 2, boxPosition.Y - 10)
+            espObject.HealthBG.Size = Vector2.new(ESP.HealthBarWidth, ESP.HealthBarHeight)
+            espObject.HealthBG.Visible = ESP.ShowHealthBar
+            
+            -- Update health bar fill
+            local healthPercent = health / maxHealth
+            espObject.HealthBar.Position = Vector2.new(vector.X - ESP.HealthBarWidth / 2, boxPosition.Y - 10)
+            espObject.HealthBar.Size = Vector2.new(ESP.HealthBarWidth * healthPercent, ESP.HealthBarHeight)
+            espObject.HealthBar.Color = GetHealthColor(health, maxHealth)
+            espObject.HealthBar.Visible = ESP.ShowHealthBar
+        else
+            -- Hide ESP elements if player is off screen or too far
+            for _, drawing in pairs(espObject) do
+                drawing.Visible = false
+            end
+        end
+    end
+end)
+ 
+-- Add toggle functionality (can be bound to a key)
+local UserInputService = game:GetService("UserInputService")
+ 
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightAlt then
+        ESP.Enabled = not ESP.Enabled
+    end
+end)
+ 
+-- Instructions on how to use this script
+print("ESP Script loaded! Press Right Alt to toggle ESP.")
+print("ESP shows player boxes by team color and health bars.")
+print("Maximum ESP rendering distance: 5000 studs")
+end)
+Section:NewButton("Killall", "Kills All", function()
+    local plrs = game:GetService("Players")
+
+local pname = game.Players.LocalPlayer.Name
+for i, player in pairs(plrs:GetPlayers()) do
+    local tbl_main =
+        {
+            game:GetService("Workspace")[player.Name].Humanoid,
+            math.huge,
+            0,
+            0
+        }
+    game:GetService("ReplicatedStorage")["ACS_Engine"].Eventos.Damage:FireServer(unpack(tbl_main))
+end
+end)
+Section:NewButton("fling all", "zboara toti", function()
+   loadstring(game:HttpGet("https://pastebin.com/raw/zqyDSUWX"))() 
+end)
+Section:NewButton("Radio", "Injuraturi pe sv ", function()
+   local SoundEvent = nil :: RemoteEvent
+
+for _, v in pairs(workspace:GetDescendants()) do 
+    if v.Name == "AC6_FE_Sounds" then
+        SoundEvent = v
+        break
+    end
+end
+
+local Characters = "qwertyuiopasdfghjklzxcvbnm1234567890"
+local function GetName()
+    local s = ""
+    for i = 1, 25 do
+        local sel = math.random(1, #Characters)
+        s ..= string.sub(Characters, sel, sel)
+    end
+    return s
+end
+
+local Name = GetName()
+
+
+SoundEvent:FireServer("newSound", Name, workspace, "http://www.roblox.com/asset/?id=6272810275", 1, 10, true)
+SoundEvent:FireServer("playSound", Name)
+
+
+task.spawn(function()
+    while task.wait(0.25) do
+        SoundEvent:FireServer("updateSound", Name, "http://www.roblox.com/asset/?id=6272810275", 1, 10)
+    end
+end)
+end)
+Section:NewButton("aimbot", "iti fuge tinta", function()
+    --[[
+    Script created by Alex Gaming
+    YouTube/Discord/Other: [Optional Contact Info or Channel Link]
+    Please do not re-upload or redistribute without credit.
+]]
+ 
+local teamCheck = false
+local fov = 120
+local lockPart = "HumanoidRootPart"
+local aimbotEnabled = false
+local espEnabled = true
+local headAimEnabled = false
+local currentTarget = nil
+local currentTargetDistance = "N/A"
+local themeColor = Color3.fromRGB(0, 122, 255)
+ 
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+ 
+-- **ESP Variables**
+local highlightedPlayers = {}
+ 
+-- **Create Highlight Function**
+local function createHighlight(player)
+    local function setupHighlight(character)
+        if character:FindFirstChild("HumanoidRootPart") then
+            local highlight = Instance.new("Highlight")
+            highlight.Adornee = character
+            highlight.FillColor = themeColor
+            highlight.FillTransparency = 0.5
+            highlight.OutlineColor = Color3.new(1, 1, 1)
+            highlight.OutlineTransparency = 0.3
+            highlight.Enabled = espEnabled
+            highlight.Parent = character
+ 
+            highlightedPlayers[player] = highlight
+        else
+            task.delay(1, function()
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    setupHighlight(character)
+                end
+            end)
+        end
+    end
+ 
+    if player.Character then
+        setupHighlight(player.Character)
+    end
+ 
+    player.CharacterAdded:Connect(function(character)
+        wait(0.5)
+        setupHighlight(character)
+    end)
+end
+ 
+local function removeHighlight(player)
+    if highlightedPlayers[player] then
+        highlightedPlayers[player]:Destroy()
+        highlightedPlayers[player] = nil
+    end
+end
+ 
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if not highlightedPlayers[player] and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                createHighlight(player)
+            elseif highlightedPlayers[player] then
+                highlightedPlayers[player].Enabled = espEnabled
+            end
+        end
+    end
+end)
+ 
+local function getClosestTarget()
+    local closestTarget = nil
+    local shortestDistance = math.huge
+    local screenCenter = Camera.ViewportSize / 2
+    local playerPosition = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.Character["HumanoidRootPart"].Position or Vector3.new(0, 0, 0)
+ 
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character then
+            local targetPart = headAimEnabled and player.Character:FindFirstChild("Head") or player.Character:FindFirstChild("HumanoidRootPart")
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if targetPart and humanoid and humanoid.Health > 0 then
+                local distanceFromPlayer = (playerPosition - targetPart.Position).Magnitude
+                local screenPoint, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
+                local distanceOnScreen = (Vector2.new(screenPoint.X, screenPoint.Y) - screenCenter).Magnitude
+ 
+                if onScreen and distanceOnScreen < shortestDistance and distanceOnScreen <= fov then
+                    if not teamCheck or player.Team ~= Players.LocalPlayer.Team then
+                        closestTarget = player
+                        shortestDistance = distanceOnScreen
+                        currentTargetDistance = math.floor(distanceFromPlayer)
+                    end
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+ 
+local function lockOnTarget()
+    if currentTarget and currentTarget.Character then
+        local targetPart = headAimEnabled and currentTarget.Character:FindFirstChild("Head") or currentTarget.Character:FindFirstChild("HumanoidRootPart")
+        if targetPart then
+            local targetVelocity = targetPart.Velocity or Vector3.new(0, 0, 0)
+            local predictionFactor = math.clamp(0.05 + (currentTargetDistance / 2000), 0.02, 0.1)
+            local predictedPosition = targetPart.Position + (targetVelocity * predictionFactor)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, predictedPosition), 0.2)
+        else
+            currentTarget = nil
+        end
+    end
+end
+ 
+RunService.RenderStepped:Connect(function()
+    if aimbotEnabled then
+        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            if not currentTarget then
+                currentTarget = getClosestTarget()
+            end
+            if currentTarget then
+                lockOnTarget()
+            end
+        else
+            currentTarget = nil
+        end
+    end
+end)
+ 
+local function createGUI()
+    if game.CoreGui:FindFirstChild("Aimlock_GUI") then
+        game.CoreGui.Aimlock_GUI:Destroy()
+    end
+ 
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "Aimlock_GUI"
+    ScreenGui.Parent = game.CoreGui
+ 
+    local Frame = Instance.new("Frame", ScreenGui)
+    Frame.Size = UDim2.new(0, 200, 0, 190)
+    Frame.Position = UDim2.new(1, -220, 0, 50)
+    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Frame.BorderSizePixel = 2
+    Frame.BorderColor3 = themeColor
+ 
+    local creditLabel = Instance.new("TextLabel", Frame)
+    creditLabel.Size = UDim2.new(0, 180, 0, 20)
+    creditLabel.Position = UDim2.new(0, 10, 0, 0)
+    creditLabel.BackgroundTransparency = 1
+    creditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    creditLabel.TextScaled = true
+    creditLabel.Text = "Made by Alex Gaming"
+    creditLabel.Name = "CreditLabel"
+ 
+    -- 🔒 Anti-tamper Check
+    task.spawn(function()
+        while true do
+            if creditLabel.Text ~= "Made by Alex Gaming" then
+                warn("Credit tampering detected! Disabling script.")
+                aimbotEnabled = false
+                espEnabled = false
+                headAimEnabled = false
+                if ScreenGui then
+                    ScreenGui:Destroy()
+                end
+                break
+            end
+            wait(2)
+        end
+    end)
+ 
+    local function createButton(name, position, text, callback)
+        local button = Instance.new("TextButton", Frame)
+        button.Size = UDim2.new(0, 180, 0, 22)
+        button.Position = UDim2.new(0, 10, 0, position)
+        button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        button.BorderSizePixel = 2
+        button.BorderColor3 = themeColor
+        button.Text = text
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextScaled = true
+ 
+        button.MouseButton1Click:Connect(function()
+            callback(button)
+        end)
+        return button
+    end
+ 
+    createButton("Aimlock", 30, "Aimlock: OFF", function(button)
+        aimbotEnabled = not aimbotEnabled
+        button.Text = aimbotEnabled and "Aimlock: ON" or "Aimlock: OFF"
+    end)
+ 
+    createButton("Head Aim", 60, "Head Aim: OFF", function(button)
+        headAimEnabled = not headAimEnabled
+        button.Text = headAimEnabled and "Head Aim: ON" or "Head Aim: OFF"
+    end)
+ 
+    createButton("ESP", 90, "ESP: ON", function(button)
+        espEnabled = not espEnabled
+        button.Text = espEnabled and "ESP: ON" or "ESP: OFF"
+    end)
+ 
+    createButton("Theme Color", 120, "Change Theme", function(button)
+        themeColor = themeColor == Color3.fromRGB(0, 122, 255) and Color3.fromRGB(255, 165, 0) or Color3.fromRGB(0, 122, 255)
+        Frame.BorderColor3 = themeColor
+    end)
+ 
+    local distanceLabel = Instance.new("TextLabel", Frame)
+    distanceLabel.Size = UDim2.new(0, 180, 0, 20)
+    distanceLabel.Position = UDim2.new(0, 10, 0, 150)
+    distanceLabel.BackgroundTransparency = 1
+    distanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    distanceLabel.TextScaled = true
+    distanceLabel.Text = "Distance: N/A"
+ 
+    RunService.RenderStepped:Connect(function()
+        distanceLabel.Text = "Distance: " .. tostring(currentTargetDistance) .. "m"
+    end)
+end
+ 
+createGUI()
+end)
+Section:NewButton("Run & Speed", "fugi si sari tare dupa gusturile tale", function()
+    loadstring(game:HttpGet("https://pastefy.app/S3qLoL3g/raw"))()
+end)
+Section:NewButton("God", "te face barbat cu pula mare", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/FwfNEqYz", true))()
+end)
