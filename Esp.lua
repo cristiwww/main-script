@@ -1,11 +1,11 @@
 -- Player ESP Script with Team Colors and Health Bars
 -- Place this script in a LocalScript inside StarterPlayerScripts
- 
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
- 
+
 -- ESP Configuration
 local ESP = {
     Enabled = true,
@@ -20,10 +20,10 @@ local ESP = {
     HealthBarHeight = 5,
     MaxDistance = 5000, -- Increased max distance to 5000 studs
 }
- 
+
 -- Storage for ESP drawings
 local ESPObjects = {}
- 
+
 -- Function to create ESP objects for a player
 local function CreateESPForPlayer(player)
     if player == LocalPlayer then return end
@@ -74,17 +74,17 @@ local function CreateESPForPlayer(player)
         end
     end)
 end
- 
+
 -- Create ESP for all existing players
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         CreateESPForPlayer(player)
     end
 end
- 
+
 -- Create ESP for new players who join
 Players.PlayerAdded:Connect(CreateESPForPlayer)
- 
+
 -- Clear ESP for players who leave
 Players.PlayerRemoving:Connect(function(player)
     if ESPObjects[player] then
@@ -94,7 +94,7 @@ Players.PlayerRemoving:Connect(function(player)
         ESPObjects[player] = nil
     end
 end)
- 
+
 -- Function to get player team color
 local function GetPlayerTeamColor(player)
     if player.Team then
@@ -102,7 +102,7 @@ local function GetPlayerTeamColor(player)
     end
     return Color3.fromRGB(255, 255, 255) -- White for no team
 end
- 
+
 -- Function to get health color based on percentage
 local function GetHealthColor(health, maxHealth)
     local healthPercent = health / maxHealth
@@ -113,7 +113,7 @@ local function GetHealthColor(health, maxHealth)
     
     return Color3.new(r, g, 0)
 end
- 
+
 -- Update ESP on each frame
 RunService.RenderStepped:Connect(function()
     if not ESP.Enabled then
@@ -193,16 +193,16 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
- 
+
 -- Add toggle functionality (can be bound to a key)
 local UserInputService = game:GetService("UserInputService")
- 
+
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightAlt then
         ESP.Enabled = not ESP.Enabled
     end
 end)
- 
+
 -- Instructions on how to use this script
 print("ESP Script loaded! Press Right Alt to toggle ESP.")
 print("ESP shows player boxes by team color and health bars.")
